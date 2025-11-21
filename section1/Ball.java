@@ -5,72 +5,75 @@ import acm.util.RandomGenerator;
 import java.awt.event.MouseEvent;
 
 public class Ball extends GraphicsProgram {
-  private GOval ball = null;
-  private static final int BALL_RADIUS = 10;
-  private static final int DELAY = 10;
-  private double vx, vy;
+  private static final double BALL_WIDTH = 50;
+  private static final double BALL_HEIGHT = 50;
+  private static final int DELAY = 6;
+  private static final RandomGenerator random = RandomGenerator.getInstance();
+  private GOval ball;
+  private GLabel label;
   private int clickCount = 0;
-  private double distance = 0;
-  private GLabel distanceLabel;
+  private double distanceCovered = 0;
+  private boolean shouldLabelBeVisible = true;
 
-  RandomGenerator random = RandomGenerator.getInstance();
-
+  @Override
   public void run() {
-    while (true) {
-      gameInit();
-      gameLoop();
-      pause(DELAY);
-    }
-  }
-
-  private void gameInit() {
     addMouseListeners();
     drawBall();
+    gameLoop();
   }
 
   private void gameLoop() {
-    if (clickCount % 2 == 0) {
-      moveBall();
-    }
-    if (clickCount % 3 == 0) {
-      if (distanceLabel != null) {
-        remove(distanceLabel);
+    double vx = 0, vy = 0;
+    while (true) {
+      if (shouldLabelBeVisible) {
+        drawLabel();
       }
-      drawLabel();
-    } else {
-      if (distanceLabel != null) {
-        remove(distanceLabel);
-      }
+      moveBall(vx, vy);
+      pause(DELAY);
+      deleteLabel();
     }
   }
 
-  private void drawLabel() {
-    distanceLabel = new GLabel("Distance Covered: " + distance);
-    add(distanceLabel, 5, getHeight() - 2 * distanceLabel.getHeight());
+  @Override
+  public void mouseClicked(MouseEvent e) {
+    clickCount++;
+    shouldLabelBeVisible = clickCount % 3 == 0;
   }
 
-  public void mouseClicked(MouseEvent e) { clickCount++; }
-
-  private void moveBall() {
-    vx = random.nextDouble(0.0, 5.0);
-    vy = random.nextDouble(0.0, 5.0);
+  private void moveBall(double vx, double vy) {
+    if (clickCount % 2 == 1) {
+      return;
+    }
+    vx = random.nextDouble(0, 5);
+    vy = random.nextDouble(0, 5);
     boolean isVxNegative = random.nextBoolean();
     boolean isVyNegative = random.nextBoolean();
-
-    if (isVxNegative)
+    if (isVxNegative) {
       vx *= -1;
-    if (isVyNegative)
+    }
+    if (isVyNegative) {
       vy *= -1;
-
+    }
     ball.move(vx, vy);
-    distance += Math.sqrt(vx * vx + vy * vy);
+    distanceCovered += Math.sqrt(vx * vx + vy * vy);
   }
 
   private void drawBall() {
-    ball = new GOval(BALL_RADIUS * 2, BALL_RADIUS * 2);
+    ball = new GOval(BALL_WIDTH, BALL_HEIGHT);
     ball.setFilled(true);
-    double startX = getWidth() / 2.0 - BALL_RADIUS;
-    double startY = getHeight() / 2.0 - BALL_RADIUS;
+    double startX = (getWidth() - BALL_WIDTH) / 2.0;
+    double startY = (getHeight() - BALL_HEIGHT) / 2.0;
     add(ball, startX, startY);
+  }
+
+  private void drawLabel() {
+    label = new GLabel("Distance covered: " + distanceCovered);
+    add(label, 10, getHeight() - label.getAscent());
+  }
+
+  private void deleteLabel() {
+    if (label != null) {
+      remove(label);
+    }
   }
 }
